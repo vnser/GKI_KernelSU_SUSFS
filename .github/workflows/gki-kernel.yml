@@ -249,7 +249,7 @@ jobs:
                   echo "BRANCH=-s next" >> $GITHUB_ENV
                   ;;
                 "SukiSU")
-                  echo "BRANCH=-s b8b7534" >> $GITHUB_ENV
+                  echo "BRANCH=-s susfs-main" >> $GITHUB_ENV
                   ;;
                 *)
                   echo "BRANCH=-" >> $GITHUB_ENV
