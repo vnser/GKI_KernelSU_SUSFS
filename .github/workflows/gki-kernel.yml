@@ -171,7 +171,7 @@ jobs:
           git clone https://github.com/WildPlusKernel/AnyKernel3.git -b "$ANYKERNEL_BRANCH"
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "$SUSFS_BRANCH"
           cd susfs4ksu
-          git checkout ee198784
+          git checkout 48046cad
           cd ../
           git clone https://github.com/WildPlusKernel/kernel_patches.git
           # Sukisu的补丁仓库
