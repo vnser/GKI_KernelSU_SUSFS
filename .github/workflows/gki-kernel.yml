@@ -170,9 +170,9 @@ jobs:
           # Clone repositories using the branch names
           git clone https://github.com/WildPlusKernel/AnyKernel3.git -b "$ANYKERNEL_BRANCH"
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "$SUSFS_BRANCH"
-          # cd susfs4ksu
-          # git checkout 2598fee8
-          # cd ../
+          cd susfs4ksu
+          git checkout 2a6655eb
+          cd ../
           git clone https://github.com/WildPlusKernel/kernel_patches.git
           # Sukisu的补丁仓库
           git clone https://github.com/ShirkNeko/SukiSU_patch.git
