@@ -301,57 +301,57 @@ jobs:
             git fetch origin "susfs-main" --depth=50
             git checkout "b8b7534"
 
-          #   KSU_API_VERSION=$(cat "kernel/Makefile" | \
-          #   grep -m1 "KSU_VERSION_API :=" | awk -F'= ' '{print $2}' | tr -d '[:space:]')
+            KSU_API_VERSION=$(cat "kernel/Makefile" | \
+            grep -m1 "KSU_VERSION_API :=" | awk -F'= ' '{print $2}' | tr -d '[:space:]')
 
-          # if [[ -z "$KSU_API_VERSION" || "$(printf '%s\n' "$KSU_API_VERSION" "3.1.7" | sort -V | head -n1)" != "3.1.7" ]]; then
-          #   KSU_API_VERSION="3.1.7"
-          # fi
+          if [[ -z "$KSU_API_VERSION" || "$(printf '%s\n' "$KSU_API_VERSION" "3.1.7" | sort -V | head -n1)" != "3.1.7" ]]; then
+            KSU_API_VERSION="3.1.7"
+          fi
 
-          # echo "KSU_API_VERSION=$KSU_API_VERSION" >> $GITHUB_ENV
+          echo "KSU_API_VERSION=$KSU_API_VERSION" >> $GITHUB_ENV
 
-          # GIT_HASH=$(git rev-parse --short HEAD)
-          # echo "GIT_HASH=$GIT_HASH"
+          GIT_HASH=$(git rev-parse --short HEAD)
+          echo "GIT_HASH=$GIT_HASH"
 
 
-          # # 无手动 hash，使用最新 commit
-          # #if [[ "$CUSTOM_TAG" == "F" || "$CUSTOM_TAG" == "f" || -z "$CUSTOM_TAG" ]]; then
-          # VERSION_FULL="v$KSU_API_VERSION-$GIT_HASH@vring"
-          # # else
-          #   #VERSION_FULL="v$KSU_API_VERSION-$CUSTOM_TAG@$BRANCH_NAME[$GIT_HASH]"
-          # #fi
+          # 无手动 hash，使用最新 commit
+          #if [[ "$CUSTOM_TAG" == "F" || "$CUSTOM_TAG" == "f" || -z "$CUSTOM_TAG" ]]; then
+          VERSION_FULL="v$KSU_API_VERSION-$GIT_HASH@vring"
+          # else
+            #VERSION_FULL="v$KSU_API_VERSION-$CUSTOM_TAG@$BRANCH_NAME[$GIT_HASH]"
+          #fi
           
 
-          # sed -i '/define get_ksu_version_full/,/endef/d' kernel/Makefile
-          # sed -i '/KSU_VERSION_API :=/d' kernel/Makefile
-          # sed -i '/KSU_VERSION_FULL :=/d' kernel/Makefile
+          sed -i '/define get_ksu_version_full/,/endef/d' kernel/Makefile
+          sed -i '/KSU_VERSION_API :=/d' kernel/Makefile
+          sed -i '/KSU_VERSION_FULL :=/d' kernel/Makefile
 
-          # VERSION_DEFINITIONS=$(cat <<EOF
-          #   define get_ksu_version_full
-          #   $VERSION_FULL
-          #   endef
+          VERSION_DEFINITIONS=$(cat <<EOF
+            define get_ksu_version_full
+            $VERSION_FULL
+            endef
 
-          #   KSU_VERSION_API := $KSU_API_VERSION
-          #   KSU_VERSION_FULL := $VERSION_FULL
-          # EOF
-          # )
+            KSU_VERSION_API := $KSU_API_VERSION
+            KSU_VERSION_FULL := $VERSION_FULL
+          EOF
+          )
 
-          # awk -v def="$VERSION_DEFINITIONS" '
-          #   /REPO_OWNER :=/ {print; print def; inserted=1; next}
-          #   1
-          #   END {if (!inserted) print def}
-          # ' kernel/Makefile > kernel/Makefile.tmp && mv kernel/Makefile.tmp kernel/Makefile
+          awk -v def="$VERSION_DEFINITIONS" '
+            /REPO_OWNER :=/ {print; print def; inserted=1; next}
+            1
+            END {if (!inserted) print def}
+          ' kernel/Makefile > kernel/Makefile.tmp && mv kernel/Makefile.tmp kernel/Makefile
 
-          # KSU_VERSION=$(expr $(git rev-list --count main 2>/dev/null || echo 13000) + 10700)
-          # echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
+          KSU_VERSION=$(expr $(git rev-list --count main 2>/dev/null || echo 13000) + 10700)
+          echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
 
-          # echo "::group::最终 Makefile 中版本信息及部分调试结果预览"
-          # grep -A10 "REPO_OWNER" kernel/Makefile
-          # grep "KSU_VERSION_FULL" kernel/Makefile
-          # echo "::endgroup::"
-            
-          # sed -i 's|\$(shell cd \$(srctree)/\$(src); \$(GIT_BIN) rev-parse --short=8 HEAD)|${{ vars.MANAGER_STR }}|g' ./kernel/Makefile 
-          # sed -n '50,60p' ./kernel/Makefile
+          echo "::group::最终 Makefile 中版本信息及部分调试结果预览"
+          grep -A10 "REPO_OWNER" kernel/Makefile
+          grep "KSU_VERSION_FULL" kernel/Makefile
+          echo "::endgroup::"
+          cat kernel/Makefile
+          sed -i 's|\$(shell cd \$(srctree)/\$(src); \$(GIT_BIN) rev-parse --short=8 HEAD)|${{ vars.MANAGER_STR }}|g' ./kernel/Makefile 
+          sed -n '50,60p' ./kernel/Makefile
           #fi
 
       - name: 为 KernelSU 变体安装 SUSFS 补丁
