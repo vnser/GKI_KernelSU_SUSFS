@@ -326,7 +326,7 @@ jobs:
           #     VERSION_FULL="v$KSU_API_VERSION-$CUSTOM_TAG@$BRANCH_NAME[$GIT_HASH]"
           #   fi
           # fi
-          VERSION_FULL="v$KSU_API_VERSION-$GIT_HASH@$vring"
+          VERSION_FULL="v$KSU_API_VERSION-$GIT_HASH@vring"
           sed -i '/define get_ksu_version_full/,/endef/d' kernel/Makefile
           sed -i '/KSU_VERSION_API :=/d' kernel/Makefile
           sed -i '/KSU_VERSION_FULL :=/d' kernel/Makefile
