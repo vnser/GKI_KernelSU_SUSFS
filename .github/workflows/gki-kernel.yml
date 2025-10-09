@@ -262,7 +262,7 @@ jobs:
                   echo "BRANCH=-s next" >> $GITHUB_ENV
                   ;;
                 "SukiSU")
-                  echo "BRANCH=-s 22e5c9f2" >> $GITHUB_ENV
+                  echo "BRANCH=-s 51e6a1b6" >> $GITHUB_ENV
                   ;;
                 *)
                   echo "BRANCH=-" >> $GITHUB_ENV
@@ -343,8 +343,8 @@ jobs:
           END {if (!inserted) print def}
           ' kernel/Makefile > kernel/Makefile.tmp && mv kernel/Makefile.tmp kernel/Makefile
           
-          #3.1.9 版本号
-          KSU_VERSION=$(expr $(git rev-list --count b8b7534 2>/dev/null || echo 13000) + 10700) 
+          #3.1.9 版本号 main分支 对应hash c9507050
+          KSU_VERSION=$(expr $(git rev-list --count c9507050 2>/dev/null || echo 13000) + 10700) 
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
           
           echo "::group::最终 Makefile 中版本信息及部分调试结果预览"
@@ -866,12 +866,12 @@ jobs:
           echo "Building boot.img"
           $MKBOOTIMG --header_version 4 --kernel Image --output boot.img
           $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot.img --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
-          cp ./boot.img ../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-boot.img
+          cp ./boot.img ../${{ env.KSUVER }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-boot.img
 
           echo "Building boot-gz.img"
           $MKBOOTIMG --header_version 4 --kernel Image.gz --output boot-gz.img
           $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-gz.img --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
-          cp ./boot-gz.img ../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-boot-gz.img
+          cp ./boot-gz.img ../${{ env.KSUVER }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-boot-gz.img
 
           echo "Building boot-lz4.img"
           $MKBOOTIMG --header_version 4 --kernel Image.lz4 --output boot-lz4.img
