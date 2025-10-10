@@ -578,17 +578,12 @@ jobs:
       - name: Add BBG
         run: |
           echo "disable BBG"
-          #cd "$CONFIG"
-          #echo "Adding BBG..."
-          #wget -O- https://github.com/vc-teahouse/Baseband-guard/raw/main/setup.sh | bash
-          #echo "CONFIG_BBG=y" >> common/arch/arm64/configs/gki_defconfig
-          #sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/landlock/landlock,baseband_guard/ } }' common/security/Kconfig
-      - name: Apply LSM_BBG
-        run: |
-          cd kernel_workspace/kernel_platform/common
-          echo "正在启用内核级基带保护支持…"
-          curl -LSs https://raw.githubusercontent.com/vc-teahouse/Baseband-guard/main/setup.sh | bash
-          sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/bpf/bpf,baseband_guard/ } }' ./security/Kconfig
+          cd "$CONFIG"
+          echo "Adding BBG..."
+          wget -O- https://github.com/vc-teahouse/Baseband-guard/raw/main/setup.sh | bash
+          echo "CONFIG_BBG=y" >> common/arch/arm64/configs/gki_defconfig
+          sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/landlock/landlock,baseband_guard/ } }' common/security/Kconfig
+
 
       - name: 添加SUSFS配置设置
         run: |
