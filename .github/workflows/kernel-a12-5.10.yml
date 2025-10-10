@@ -87,7 +87,22 @@ jobs:
           revision: "r14"
         - sub_level: "226"
           os_patch_level: "2024-11"
-          revision: "r8"
+        - sub_level: "2x1"
+          os_patch_level: "2025-02"
+          revision: "r5"
+        - sub_level: "2x2"
+          os_patch_level: "2025-05"
+          revision: "r4"
+
+        - sub_level: "2x3"
+          os_patch_level: "2025-06"
+          revision: "r4"
+
+        - sub_level: "2x4"
+          os_patch_level: "2025-09"
+          revision: "r1"
+
+
         - sub_level: "X"
           os_patch_level: "lts"
           revision: "r1"
