@@ -262,7 +262,7 @@ jobs:
                   echo "BRANCH=-s next" >> $GITHUB_ENV
                   ;;
                 "SukiSU")
-                  echo "BRANCH=-s 8f60dacc" >> $GITHUB_ENV
+                  echo "BRANCH=-s 97e1250d" >> $GITHUB_ENV
                   ;;
                 *)
                   echo "BRANCH=-" >> $GITHUB_ENV
@@ -273,7 +273,7 @@ jobs:
               case "$variant_input" in
                 "Official" | "MKSU") echo "BRANCH=-s main" >> $GITHUB_ENV ;;
                 "Next")              echo "BRANCH=-s next" >> $GITHUB_ENV ;;
-                "SukiSU")           echo "BRANCH=-s 8f60dacc" >> $GITHUB_ENV ;;
+                "SukiSU")           echo "BRANCH=-s 97e1250d" >> $GITHUB_ENV ;;
                 *) 
                   echo "错误：未定义开发分支的变体 '$variant_input'" >&2
                   exit 1
@@ -344,7 +344,7 @@ jobs:
           ' kernel/Makefile > kernel/Makefile.tmp && mv kernel/Makefile.tmp kernel/Makefile
           
           #3.1.9 版本号 main分支 对应hash c9507050
-          KSU_VERSION=$(expr $(git rev-list --count 475b3998 2>/dev/null || echo 13000) + 10700) 
+          KSU_VERSION=$(expr $(git rev-list --count 0af1ab28 2>/dev/null || echo 13000) + 10700) 
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
           
           echo "::group::最终 Makefile 中版本信息及部分调试结果预览"
