@@ -173,7 +173,8 @@ jobs:
           
           cd susfs4ksu
           if [ "$SUSFS_BRANCH" = "gki-android12-5.10" ]; then
-            git checkout de5c7900
+            #git checkout de5c7900
+           echo "123"
           elif [ "$SUSFS_BRANCH" = "gki-android13-5.15" ]; then
             git checkout 36a4ad6d
           elif [ "$SUSFS_BRANCH" = "gki-android14-6.1" ]; then
@@ -262,8 +263,8 @@ jobs:
                   echo "BRANCH=-s next" >> $GITHUB_ENV
                   ;;
                 "SukiSU")
-                  echo "BRANCH=-s 97e1250d" >> $GITHUB_ENV    
-                  #echo "BRANCH=-s susfus-main" >> $GITHUB_ENV
+                  #echo "BRANCH=-s 97e1250d" >> $GITHUB_ENV    
+                  echo "BRANCH=-s susfus-main" >> $GITHUB_ENV
                   ;;
                 *)
                   echo "BRANCH=-" >> $GITHUB_ENV
@@ -344,8 +345,8 @@ jobs:
           END {if (!inserted) print def}
           ' kernel/Makefile > kernel/Makefile.tmp && mv kernel/Makefile.tmp kernel/Makefile
           
-          #3.1.9 版本号 main分支 对应hash c9507050
-          KSU_VERSION=$(expr $(git rev-list --count 0af1ab28 2>/dev/null || echo 13000) + 10700) 
+          #3.1.9 版本号 main分支 对应hash 0af1ab28
+          KSU_VERSION=$(expr $(git rev-list --count main 2>/dev/null || echo 13000) + 10700) 
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
           
           echo "::group::最终 Makefile 中版本信息及部分调试结果预览"
