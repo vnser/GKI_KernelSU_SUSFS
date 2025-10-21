@@ -264,7 +264,7 @@ jobs:
                   ;;
                 "SukiSU")
                   #echo "BRANCH=-s 97e1250d" >> $GITHUB_ENV    
-                  echo "BRANCH=-s susfus-main" >> $GITHUB_ENV
+                  echo "BRANCH=-s susfs-main" >> $GITHUB_ENV
                   ;;
                 *)
                   echo "BRANCH=-" >> $GITHUB_ENV
@@ -275,7 +275,7 @@ jobs:
               case "$variant_input" in
                 "Official" | "MKSU") echo "BRANCH=-s main" >> $GITHUB_ENV ;;
                 "Next")              echo "BRANCH=-s next" >> $GITHUB_ENV ;;
-                "SukiSU")           echo "BRANCH=-s susfus-main" >> $GITHUB_ENV ;;
+                "SukiSU")           echo "BRANCH=-s susfs-main" >> $GITHUB_ENV ;;
                 *) 
                   echo "错误：未定义开发分支的变体 '$variant_input'" >&2
                   exit 1
