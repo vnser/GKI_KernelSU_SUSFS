@@ -171,21 +171,21 @@ jobs:
           git clone https://github.com/WildPlusKernel/AnyKernel3.git -b "$ANYKERNEL_BRANCH"
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "$SUSFS_BRANCH"
           
-          cd susfs4ksu
-          if [ "$SUSFS_BRANCH" = "gki-android12-5.10" ]; then
+          #cd susfs4ksu
+          #if [ "$SUSFS_BRANCH" = "gki-android12-5.10" ]; then
             #git checkout de5c7900
-           echo "123"
-          elif [ "$SUSFS_BRANCH" = "gki-android13-5.15" ]; then
-            git checkout 36a4ad6d
-          elif [ "$SUSFS_BRANCH" = "gki-android14-6.1" ]; then
-            git checkout 085ce003
-          elif [ "$SUSFS_BRANCH" = "gki-android15-6.6" ]; then
-            git checkout 2598fee8
-          else
-            echo "No specific commit for this"
-            exit 500
-          fi
-          cd ../
+           #echo "123"
+          #elif [ "$SUSFS_BRANCH" = "gki-android13-5.15" ]; then
+           # git checkout 36a4ad6d
+          #elif [ "$SUSFS_BRANCH" = "gki-android14-6.1" ]; then
+          #  git checkout 085ce003
+          #elif [ "$SUSFS_BRANCH" = "gki-android15-6.6" ]; then
+          #  git checkout 2598fee8
+          #else
+          #  echo "No specific commit for this"
+          #  exit 500
+          #fi
+          #cd ../
           
           git clone https://github.com/WildPlusKernel/kernel_patches.git
           # Sukisu的补丁仓库
@@ -580,13 +580,11 @@ jobs:
       - name: Add BBG
         run: |
           #echo "disable BBG"
-          cd "$CONFIG"
-          echo "Adding BBG..."
-          wget -O- https://github.com/vc-teahouse/Baseband-guard/raw/main/setup.sh | bash
-          echo "CONFIG_BBG=y" >> common/arch/arm64/configs/gki_defconfig
-          # sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/landlock/landlock,baseband_guard/ } }' common/security/Kconfig
+          #cd "$CONFIG"
+          #echo "Adding BBG..."
+          #wget -O- https://github.com/vc-teahouse/Baseband-guard/raw/main/setup.sh | bash
+          #echo "CONFIG_BBG=y" >> common/arch/arm64/configs/gki_defconfig
           #sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/bpf/bpf,baseband_guard/ } }' common/security/Kconfig
-          sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/bpf/bpf,baseband_guard/ } }' common/security/Kconfig
 
 
       - name: 添加SUSFS配置设置
