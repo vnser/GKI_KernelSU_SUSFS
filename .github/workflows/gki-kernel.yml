@@ -265,6 +265,7 @@ jobs:
                 "SukiSU")
                   #echo "BRANCH=-s 97e1250d" >> $GITHUB_ENV    
                   echo "BRANCH=-s c4a60378" >> $GITHUB_ENV
+                  echo "BRANCH=-s b8e463b5" >> $GITHUB_ENV
                   ;;
                 *)
                   echo "BRANCH=-" >> $GITHUB_ENV
@@ -346,7 +347,7 @@ jobs:
           ' kernel/Makefile > kernel/Makefile.tmp && mv kernel/Makefile.tmp kernel/Makefile
           
           #3.1.9 版本号 main分支 对应hash 0af1ab28
-          KSU_VERSION=$(expr $(git rev-list --count b5e5be25 2>/dev/null || echo 13000) + 10700) 
+          KSU_VERSION=$(expr $(git rev-list --count 3b966c53 2>/dev/null || echo 13000) + 10700) 
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
           
           echo "::group::最终 Makefile 中版本信息及部分调试结果预览"
