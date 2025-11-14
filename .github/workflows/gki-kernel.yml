@@ -700,7 +700,8 @@ jobs:
             CURRENT_TIME="${{ inputs.build_time }}"
           else
             echo "构建时间为空，使用当前时间"
-            CURRENT_TIME=$(date -u +"%a %b %d %H:%M:%S UTC %Y")
+            CURRENT_TIME=$(date -u +"%a %b %d %H:%M:%S UTC 2024")
+            #CURRENT_TIME=$(date -u +"%a %b %d %H:%M:%S UTC %Y")
           fi
           
           echo "CURRENT_TIME=$CURRENT_TIME"
