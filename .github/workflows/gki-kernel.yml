@@ -187,6 +187,22 @@ jobs:
           #fi
           #cd ../
           
+          cd susfs4ksu
+          if [ "$SUSFS_BRANCH" = "gki-android12-5.10" ]; then
+            git checkout 18ba5fdd
+          elif [ "$SUSFS_BRANCH" = "gki-android13-5.15" ]; then
+            git checkout 0f1c2e1b
+          elif [ "$SUSFS_BRANCH" = "gki-android14-6.1" ]; then
+            git checkout 9e164085
+          elif [ "$SUSFS_BRANCH" = "gki-android15-6.6" ]; then
+            git checkout a0efc361
+          else
+            echo "No specific commit for this"
+            exit 500
+          fi
+          cd ../
+          
+          
           git clone https://github.com/WildPlusKernel/kernel_patches.git
           # Sukisu的补丁仓库
           git clone https://github.com/ShirkNeko/SukiSU_patch.git
@@ -264,7 +280,7 @@ jobs:
                   ;;
                 "SukiSU")
                   #echo "BRANCH=-s 97e1250d" >> $GITHUB_ENV    
-                  echo "BRANCH=-s susfs-main" >> $GITHUB_ENV
+                  echo "BRANCH=-s 55ddeb63" >> $GITHUB_ENV
                   #echo "BRANCH=-s b8e463b5" >> $GITHUB_ENV
                   ;;
                 *)
@@ -347,7 +363,7 @@ jobs:
           ' kernel/Makefile > kernel/Makefile.tmp && mv kernel/Makefile.tmp kernel/Makefile
           
           #3.1.9 版本号 main分支 对应hash 3b966c53
-          KSU_VERSION=$(expr $(git rev-list --count main 2>/dev/null || echo 13000) + 37185) 
+          KSU_VERSION=$(expr $(git rev-list --count ad2a23f5 2>/dev/null || echo 13000) + 37185) 
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
           
           echo "::group::最终 Makefile 中版本信息及部分调试结果预览"
