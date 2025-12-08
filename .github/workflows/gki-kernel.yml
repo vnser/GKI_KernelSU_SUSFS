@@ -264,7 +264,7 @@ jobs:
                   ;;
                 "SukiSU")
                   #echo "BRANCH=-s 97e1250d" >> $GITHUB_ENV    
-                  echo "BRANCH=-s susfs-main" >> $GITHUB_ENV
+                  echo "BRANCH=-s builtin" >> $GITHUB_ENV
                   #echo "BRANCH=-s b8e463b5" >> $GITHUB_ENV
                   ;;
                 *)
@@ -326,9 +326,9 @@ jobs:
           echo "GIT_HASH=$GIT_HASH"
           
           VERSION_FULL="v$KSU_API_VERSION-$GIT_HASH@vring"
-          sed -i '/define get_ksu_version_full/,/endef/d' kernel/Makefile
-          sed -i '/KSU_VERSION_API :=/d' kernel/Makefile
-          sed -i '/KSU_VERSION_FULL :=/d' kernel/Makefile
+          sed -i '/define get_ksu_version_full/,/endef/d' kernel/Kbuild
+          sed -i '/KSU_VERSION_API :=/d' kernel/Kbuild
+          sed -i '/KSU_VERSION_FULL :=/d' kernel/Kbuild
           
           VERSION_DEFINITIONS=$(cat <<EOF
             define get_ksu_version_full
@@ -344,15 +344,15 @@ jobs:
           /REPO_OWNER :=/ {print; print def; inserted=1; next}
           1
           END {if (!inserted) print def}
-          ' kernel/Makefile > kernel/Makefile.tmp && mv kernel/Makefile.tmp kernel/Makefile
+          ' kernel/Kbuild > kernel/Kbuild.tmp && mv kernel/Kbuild.tmp kernel/Kbuild
           
-          #3.1.9 版本号 main分支 对应hash 3b966c53
-          KSU_VERSION=$(expr $(git rev-list --count main 2>/dev/null || echo 13000) + 37185) 
+          
+          KSU_VERSION=$(expr $(git rev-list --count main 2>/dev/null || echo 13000) + 37185)
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
           
-          echo "::group::最终 Makefile 中版本信息及部分调试结果预览"
-          grep -A10 "REPO_OWNER" kernel/Makefile
-          grep "KSU_VERSION_FULL" kernel/Makefile
+          echo "::group::最终 Kbuild 中版本信息及部分调试结果预览"
+          grep -A10 "REPO_OWNER" kernel/Kbuild
+          grep "KSU_VERSION_FULL" kernel/Kbuild
           echo "::endgroup::"
 
       - name: 为 KernelSU 变体安装 SUSFS 补丁
