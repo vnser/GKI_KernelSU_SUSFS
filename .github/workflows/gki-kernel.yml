@@ -1,4 +1,4 @@
-name: GKI Kernel Build - Susfs 1.5.9
+name: GKI Kernel Build
 permissions:
   contents: write  # Allow writing to repository contents (for pushing tags)
   actions: write   # Allows triggering actions
@@ -313,7 +313,7 @@ jobs:
         run: |
           cd "$CONFIG"
           cd ./KernelSU
-          KSU_API_VERSION=$(cat "kernel/Makefile" | \
+          KSU_API_VERSION=$(cat "kernel/Kbuild" | \
           grep -m1 "KSU_VERSION_API :=" | awk -F'= ' '{print $2}' | tr -d '[:space:]')
           
           if [[ -z "$KSU_API_VERSION" || "$(printf '%s\n' "$KSU_API_VERSION" "3.1.7" | sort -V | head -n1)" != "3.1.7" ]]; then
