@@ -773,12 +773,24 @@ jobs:
             if [ -f "build/build.sh" ]; then
               LTO=thin BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh CC="/usr/bin/ccache clang" || exit 1
             else
-       
-                ls /build/kernel/kleaf/impl/
-                sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
-                #Remove Abi Exports and Error
-                rm -rf ./common/android/abi_gki_protected_exports_*
-                perl -pi -e 's/^\s*"protected_exports_list"\s*:\s*"android\/abi_gki_protected_exports_aarch64",\s*$//;' ./common/BUILD.bazel
+             # Remove check_defconfig
+              if [[ "${{ inputs.kernel_version }}" == "6.12" ]]; then
+              sed -i '/name = "kernel_aarch64",/a\    check_defconfig = "disabled",' common/BUILD.bazel
+              awk '/name = "kernel_aarch64"/,/^\)/ {if(/check_defconfig = "disabled"/) found=1} END{if(found) print "SUCCESS: check_defconfig = \"disabled\" is in the kernel_aarch64 block"; else print "FAILED: NOT in the kernel_aarch64 block"}' common/BUILD.bazel
+              else
+                 sed -i 's/check_defconfig//' ./common/build.config.gki
+              fi
+            fi
+          
+          
+            ls /build/kernel/kleaf/impl/
+            sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
+            #Remove Abi Exports and Error
+            rm -rf ./common/android/abi_gki_protected_exports_*
+            perl -pi -e 's/^\s*"protected_exports_list"\s*:\s*"android\/abi_gki_protected_exports_aarch64",\s*$//;' ./common/BUILD.bazel
+            
+            
+            
               tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast  --lto=thin //common:kernel_aarch64_dist || exit 1
         
               
