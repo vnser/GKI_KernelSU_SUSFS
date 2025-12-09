@@ -687,6 +687,9 @@ jobs:
             rustup update nightly
             rustup default nightly
             rustup target add aarch64-unknown-none
+          else
+             perl -i -0777 -pe 's/\$\(\s*CONFIG_ANDROID_BINDER_IPC_RUST\s*\)/m/' common/drivers/android/Makefile
+             cat common/drivers/android/Makefile
           fi
           
           
