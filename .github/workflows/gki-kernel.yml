@@ -834,7 +834,7 @@ jobs:
           fi
 
       - name: 修补 Image 文件 安卓14和安卓15(仅限sukisu)
-        if: ${{ inputs.use_kpm && inputs.kernelsu_variant == 'SukiSU' && (inputs.android_version == 'android14' || inputs.android_version == 'android15') }}
+        if: ${{ inputs.use_kpm && inputs.kernelsu_variant == 'SukiSU' && (inputs.android_version == 'android14' || inputs.android_version == 'android15' || inputs.android_version == 'android16') }}
         run: |
 
             echo "Patching Image file..."
@@ -862,7 +862,7 @@ jobs:
           gzip -n -k -f -9 ./Image > ./Image.gz
 
       - name: 创建Bootimgs文件夹并复制镜像
-        if: ${{ inputs.android_version == 'android14' || inputs.android_version == 'android15' }}
+        if: ${{ inputs.android_version == 'android14' || inputs.android_version == 'android15' || inputs.android_version == 'android16'}}
         run: |
           echo "更改为配置目录: $CONFIG..."
           mkdir bootimgs
