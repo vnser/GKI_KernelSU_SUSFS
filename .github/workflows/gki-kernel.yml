@@ -263,9 +263,9 @@ jobs:
                   echo "BRANCH=-s next" >> $GITHUB_ENV
                   ;;
                 "SukiSU")
-                  #echo "BRANCH=-s 97e1250d" >> $GITHUB_ENV    
+          
                   echo "BRANCH=-s builtin" >> $GITHUB_ENV
-                  #echo "BRANCH=-s b8e463b5" >> $GITHUB_ENV
+            
                   ;;
                 *)
                   echo "BRANCH=-" >> $GITHUB_ENV
@@ -664,7 +664,27 @@ jobs:
           
           # Remove check_defconfig
           sed -i 's/check_defconfig//' ./common/build.config.gki
-
+          
+          if [[ "${{ inputs.kernel_version }}" == "6.12" ]]; then
+            sed -i '/name = "kernel_aarch64",/a\    check_defconfig = "disabled",' common/BUILD.bazel
+            awk '/name = "kernel_aarch64"/,/^\)/ {if(/check_defconfig = "disabled"/) found=1} END{if(found) print "SUCCESS: check_defconfig = \"disabled\" is in the kernel_aarch64 block"; else print "FAILED: NOT in the kernel_aarch64 block"}' common/BUILD.bazel
+          fi
+          
+          if [ -f common/drivers/android/binder/Makefile ]; then
+            perl -i -0777 -pe 's/\$\(\s*CONFIG_ANDROID_BINDER_IPC_RUST\s*\)/m/' common/drivers/android/binder/Makefile
+            #perl -i -ne 'print unless /CONFIG_ANDROID_BINDER_IPC_RUST_DUMMY/' common/drivers/android/binder/Makefile
+            perl -i -pe 's/^rust_binder-\$\([^)]+\)\s*:=/rust_binder-y :=/' common/drivers/android/binder/Makefile
+            cat common/drivers/android/Makefile
+            cat common/drivers/android/binder/Makefile
+            #perl -ni -e 'print unless /rust_toolchain\s*=\s*"\/\/build\/rust:linux_kernel_toolchain",/' common/BUILD.bazel
+            #cat common/BUILD.bazel
+            rustup set profile minimal
+            rustup update nightly
+            rustup default nightly
+            rustup target add aarch64-unknown-none
+          fi
+          
+          
           # 用于debug config
           tail -n 40 ./common/arch/arm64/configs/gki_defconfig
 
@@ -773,13 +793,6 @@ jobs:
             if [ -f "build/build.sh" ]; then
               LTO=thin BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh CC="/usr/bin/ccache clang" || exit 1
             else
-             # Remove check_defconfig
-              if [[ "${{ inputs.kernel_version }}" == "6.12" ]]; then
-              sed -i '/name = "kernel_aarch64",/a\    check_defconfig = "disabled",' common/BUILD.bazel
-              awk '/name = "kernel_aarch64"/,/^\)/ {if(/check_defconfig = "disabled"/) found=1} END{if(found) print "SUCCESS: check_defconfig = \"disabled\" is in the kernel_aarch64 block"; else print "FAILED: NOT in the kernel_aarch64 block"}' common/BUILD.bazel
-              fi
-         
-      
               tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast  --lto=thin //common:kernel_aarch64_dist || exit 1
               echo "debug:输出内核版本号"
               strings ./bazel-bin/common/kernel_aarch64/Image | grep 'Linux version'
