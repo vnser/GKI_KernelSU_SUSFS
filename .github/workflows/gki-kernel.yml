@@ -662,8 +662,6 @@ jobs:
           echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_SUS_MAP=y" >> ./common/arch/arm64/configs/gki_defconfig
           
-          echo "CONFIG_ANDROID_BINDER_IPC_RUST=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_ANDROID_BINDER_IPC_RUST_DUMMY=n" >> ./common/arch/arm64/configs/gki_defconfig
           
           # Remove check_defconfig
           
