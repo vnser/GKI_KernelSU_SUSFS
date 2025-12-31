@@ -1,4 +1,4 @@
-name: 编译内核a15-6-6
+name: 编译内核a16-6-12 - vring
 
 permissions:
   contents: write  # Allow writing to repository contents (for pushing tags)
@@ -40,7 +40,7 @@ on:
         type: boolean
         default: true
       use_bbg:
-        description: '是否开启BBG防格机补丁?（报错请关闭）'
+        description: '是否开启BBG防格机补丁?'
         required: true
         type: boolean
         default: true
@@ -49,11 +49,6 @@ on:
         required: true
         type: boolean
         default: true
-      cancel_susfs:
-        description: '取消susfs'
-        required: true
-        type: boolean
-        default: false
       supp_op:
         description: '是否开启一加8E处理器机型支持?(非该机型无须勾)'
         required: false
@@ -73,16 +68,16 @@ on:
 jobs:
 
   build-kernel-a15-6-6:
-    uses: ./.github/workflows/kernel-a15-6.6.yml
+    uses: ./.github/workflows/kernel-a16-6.12.yml
     secrets: inherit
     with:
+      make_release: false
       kernelsu_variant: ${{ inputs.kernelsu_variant }}
       kernelsu_branch: ${{ inputs.kernelsu_branch }}
       version: ${{ inputs.version }}
       use_zram: ${{ inputs.use_zram }}
       use_bbg: ${{ inputs.use_bbg }}
       use_kpm: ${{ inputs.use_kpm }}
-      cancel_susfs: ${{ inputs.cancel_susfs }}
       supp_op: ${{ inputs.supp_op }}
       onlyAk3: ${{ inputs.onlyAk3 }}
       build_time: ${{ inputs.build_time }}
