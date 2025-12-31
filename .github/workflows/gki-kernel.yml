@@ -847,7 +847,7 @@ jobs:
             cd "$CONFIG/out/${{ inputs.android_version }}-${{ inputs.kernel_version }}/dist"
             #curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU_patch/refs/heads/main/kpm/patch_linux" -o patch
             #curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/83aa64b7548890bb1f2eff6c990c03a1802df27b/kpm/patch_linux" -o patch
-            curl -LO --retry 5 --retry-delay 2 --retry-connrefused https://raw.githubusercontent.com/Numbersf/Action-Build/SukiSU-Ultra/patches/patch_linux -o patch
+            curl -LSs https://raw.githubusercontent.com/Numbersf/Action-Build/SukiSU-Ultra/patches/patch_linux -o patch
             chmod 777 patch
             ./patch
             rm -rf Image
@@ -863,7 +863,7 @@ jobs:
             cd "$CONFIG/bazel-bin/common/kernel_aarch64/"
             #curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU_patch/refs/heads/main/kpm/patch_linux" -o patch
             #curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/83aa64b7548890bb1f2eff6c990c03a1802df27b/kpm/patch_linux" -o patch
-            curl -LO --retry 5 --retry-delay 2 --retry-connrefused https://raw.githubusercontent.com/Numbersf/Action-Build/SukiSU-Ultra/patches/patch_linux -o patch
+            curl -LSs https://raw.githubusercontent.com/Numbersf/Action-Build/SukiSU-Ultra/patches/patch_linux -o patch
             chmod 777 patch
             ./patch
             rm -rf Image
