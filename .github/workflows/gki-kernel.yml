@@ -473,7 +473,6 @@ jobs:
           fi
 
       - name: Apply UNICODE_BYPASS and MEMORY_OPT
-        if: ${{ !inputs.cancel_susfs }}
         run: |
           cd "$CONFIG/common"
           patch -p1 --forward < "../../Action-Build/patches/optimized_mem_operations.patch"
@@ -668,9 +667,6 @@ jobs:
           echo "Adding configuration settings to gki_defconfig..."
           # Add SUSFS configuration settings
           echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/gki_defconfig
-          
-          #echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
-          
           echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
