@@ -192,7 +192,7 @@ jobs:
           git clone https://github.com/ShirkNeko/SukiSU_patch.git
           # next修复补丁
           git clone https://github.com/zzh20188/GKI_KernelSU_SUSFS.git zzh_patch
-         git clone https://github.com/Numbersf/Action-Build.git --depth=1
+          git clone https://github.com/Numbersf/Action-Build.git --depth=1
           
       - name: 设置 CONFIG 环境变量
         run: |
