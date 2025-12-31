@@ -265,7 +265,7 @@ jobs:
                   ;;
                 "SukiSU")
           
-                  echo "BRANCH=-s tmp-builtin" >> $GITHUB_ENV
+                  echo "BRANCH=-s builtin" >> $GITHUB_ENV
             
                   ;;
                 *)
