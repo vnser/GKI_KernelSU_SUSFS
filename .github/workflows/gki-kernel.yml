@@ -83,6 +83,9 @@ jobs:
           remove-cached-tools: 'false'   # Avoid unless confirmed safe
           verbose: 'true'                # Enable detailed logging
 
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: 设定 CONFIG 环境变量
         run: |
           # Set CONFIG dynamically based on inputs values
@@ -91,7 +94,32 @@ jobs:
           # Set CONFIG as an environment variable for future steps
           echo "CONFIG=$CONFIG" >> $GITHUB_ENV
 
-          echo "CONFIG set to: $CONFIG"
+          echo "CONFIG 已设置为 $CONFIG"
+
+      - name: 打印配置文件键值对
+        run: |
+          CONFIG_FILE="$GITHUB_WORKSPACE/config/config"
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "Config file not found: $CONFIG_FILE"
+            exit 1
+          fi
+
+          echo "Loaded config key/values from $CONFIG_FILE:"
+          while IFS='=' read -r key value; do
+            [ -z "$key" ] && continue
+            echo "$key=$value"
+          done < "$CONFIG_FILE"
+
+          ACTION_CONFIG="${{ vars.CONFIG }}"
+          if [ -n "$ACTION_CONFIG" ]; then
+            echo "Loaded config key/values from Actions variable CONFIG:"
+            while IFS='=' read -r key value; do
+              [ -z "$key" ] && continue
+              echo "$key=$value"
+            done <<< "$ACTION_CONFIG"
+          else
+            echo "Actions variable CONFIG is empty or not set."
+          fi
 
       # Install ccache
       - name: 安装 依赖
@@ -204,11 +232,11 @@ jobs:
           # Set CONFIG as an environment variable for future steps
           echo "CONFIG=$CONFIG" >> $GITHUB_ENV
 
-          echo "CONFIG set to: $CONFIG"
+          echo "CONFIG 已设置为 $CONFIG"
 
       - name: 初始化和同步内核源代码
         run: |
-          echo "Creating folder for configuration: $CONFIG..."
+          echo "正在创建配置目录 $CONFIG"
           mkdir -p "$CONFIG"
           cd "$CONFIG"
           git clone https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-gnu-6.4.1.git gcc
@@ -364,7 +392,7 @@ jobs:
           echo "更改为配置目录: $CONFIG..."
           cd "$CONFIG"
 
-          echo "Applying SUSFS patches..."
+          echo "开始应用 SUSFS 补丁..."
 
           # Copy SUSFS patches
           cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch ./common/
@@ -383,10 +411,10 @@ jobs:
 
           elif [ "${{ inputs.kernelsu_variant }}" == "Next" ]; then
             # 临时恢复KSU-NEXT的dev编译
-            echo "Applying SUSFS patches for KernelSU-Next..."
+            echo "为 KernelSU-Next 应用 SUSFS 补丁..."
             cd ./KernelSU-Next
             if [ "$BRANCH" == "-s next" ]; then
-              echo "当前为Dev分支的KernelSU-Next"
+              echo "当前处于 KernelSU-Next Dev 分支"
               cp ../../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./
               patch -f -p1 --fuzz=3 --ignore-whitespace < 10_enable_susfs_for_ksu.patch || true
               echo "应用临时修复补丁..."
@@ -403,7 +431,7 @@ jobs:
             fi
             
           elif [ "${{ inputs.kernelsu_variant }}" == "MKSU" ]; then
-            echo "Applying SUSFS patches for MKSU..."
+            echo "为 MKSU 应用 SUSFS 补丁..."
             cd ./KernelSU
 
             cp ../../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./
@@ -837,7 +865,7 @@ jobs:
             if [ -f "build/build.sh" ]; then
               LTO=thin BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh CC="/usr/bin/ccache clang" || exit 1
             else
-              tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast  --lto=thin //common:kernel_aarch64_dist || exit 1
+              tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast --lto=thin //common:kernel_aarch64_dist || exit 1
               echo "debug:输出内核版本号"
               strings ./bazel-bin/common/kernel_aarch64/Image | grep 'Linux version'
             fi
