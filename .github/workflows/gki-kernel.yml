@@ -199,23 +199,23 @@ jobs:
           git clone https://github.com/WildPlusKernel/AnyKernel3.git -b "$ANYKERNEL_BRANCH"
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "$SUSFS_BRANCH"
           
-          #cd susfs4ksu
-          #if [ "$SUSFS_BRANCH" = "gki-android12-5.10" ]; then
-          #  git checkout c9789840
+          cd susfs4ksu
+          if [ "$SUSFS_BRANCH" = "gki-android12-5.10" ]; then
+            git checkout c9789840
     
-          #elif [ "$SUSFS_BRANCH" = "gki-android13-5.15" ]; then
-          #  git checkout 6a300fb6
-          #elif [ "$SUSFS_BRANCH" = "gki-android14-6.1" ]; then
-          #  git checkout a442dda6
-          #elif [ "$SUSFS_BRANCH" = "gki-android15-6.6" ]; then
-          #  git checkout 9cb6d7e0
-          #elif [ "$SUSFS_BRANCH" = "gki-android16-6.12" ]; then
-          #  git checkout f126800f
-          #else
-          #  echo "No specific commit for this"
-          #  exit 500
-          #fi
-          #cd ../
+          elif [ "$SUSFS_BRANCH" = "gki-android13-5.15" ]; then
+            git checkout 6a300fb6
+          elif [ "$SUSFS_BRANCH" = "gki-android14-6.1" ]; then
+            git checkout a442dda6
+          elif [ "$SUSFS_BRANCH" = "gki-android15-6.6" ]; then
+            git checkout 9cb6d7e0
+          elif [ "$SUSFS_BRANCH" = "gki-android16-6.12" ]; then
+            git checkout f126800f
+          else
+            echo "No specific commit for this"
+            exit 500
+          fi
+          cd ../
           
           git clone https://github.com/WildPlusKernel/kernel_patches.git
           # Sukisu的补丁仓库
@@ -295,8 +295,8 @@ jobs:
                   ;;
                 "SukiSU")
                   #40269
-                 #echo "BRANCH=-s 3e94960c" >> $GITHUB_ENV
-                  echo "BRANCH=-s builtin" >> $GITHUB_ENV
+                 echo "BRANCH=-s 3e94960c" >> $GITHUB_ENV
+                  #echo "BRANCH=-s builtin" >> $GITHUB_ENV
             
                   ;;
                 *)
