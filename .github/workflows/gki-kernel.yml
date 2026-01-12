@@ -201,7 +201,7 @@ jobs:
           
           cd susfs4ksu
           if [ "$SUSFS_BRANCH" = "gki-android12-5.10" ]; then
-            git checkout 971e72b0
+            git checkout c9789840
     
           elif [ "$SUSFS_BRANCH" = "gki-android13-5.15" ]; then
             git checkout 6a300fb6
