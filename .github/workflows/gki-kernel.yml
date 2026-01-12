@@ -381,7 +381,7 @@ jobs:
           
           #9bdbadf5
           #KSU_VERSION=$(expr $(git rev-list --count 6dbf0f34  2>/dev/null || echo 13000) + 37185) #40218
-          KSU_VERSION=$(expr $(git rev-list --count aa3f660e  2>/dev/null || echo 13000) + 37185)
+          KSU_VERSION=$(expr $(git rev-list --count d0f3d58c  2>/dev/null || echo 13000) + 37185)
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
           
           echo "::group::最终 Kbuild 中版本信息及部分调试结果预览"
