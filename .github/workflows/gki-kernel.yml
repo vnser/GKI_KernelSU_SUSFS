@@ -201,7 +201,7 @@ jobs:
           
           cd susfs4ksu
           if [ "$SUSFS_BRANCH" = "gki-android12-5.10" ]; then
-            git checkout c9789840
+            git checkout f4379db3
     
           elif [ "$SUSFS_BRANCH" = "gki-android13-5.15" ]; then
             git checkout 6a300fb6
@@ -296,7 +296,7 @@ jobs:
                 "SukiSU")
                   #40269
                  #echo "BRANCH=-s 26f58189" >> $GITHUB_ENV #4.1 40218
-                 echo "BRANCH=-s 2349b7e0" >> $GITHUB_ENV
+                 echo "BRANCH=-s e7e3ab13" >> $GITHUB_ENV
                   #echo "BRANCH=-s builtin" >> $GITHUB_ENV
             
                   ;;
