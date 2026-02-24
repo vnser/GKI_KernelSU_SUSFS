@@ -1072,6 +1072,7 @@ jobs:
 
       # ==================== 上传构建产物 ====================
       - name: 上传构建产物
+        if: ${{ !inputs.onlyAk3 }}
         uses: actions/upload-artifact@v4
         with:
           #name: ${{ inputs.ksu_variant }}_kernel-${{ env.CONFIG }}
