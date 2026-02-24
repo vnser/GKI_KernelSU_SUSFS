@@ -17,7 +17,7 @@ on:
           - MKSU
           - SukiSU
           - ReSukiSU
-        default: SukiSU
+        default: ReSukiSU
       kernelsu_branch:
         description: "KSU 分支"
         required: true
@@ -56,6 +56,11 @@ on:
         required: true
         type: boolean
         default: false
+      onlyAk3:
+        description: "编译Ak3"
+        required: true
+        type: boolean
+        default: true
   workflow_call:
     inputs:
       kernelsu_variant:
@@ -102,10 +107,14 @@ jobs:
             os_patch_level: "2024-06"
           - sub_level: "84"
             os_patch_level: "2024-07"
+          - sub_level: "90"
+            os_patch_level: "2024-08"
           - sub_level: "93"
             os_patch_level: "2024-09"
           - sub_level: "112"
             os_patch_level: "2024-11"
+          - sub_level: "115"
+            os_patch_level: "2024-12"
           - sub_level: "118"
             os_patch_level: "2025-01"
           - sub_level: "124"
@@ -114,8 +123,9 @@ jobs:
             os_patch_level: "2025-06"
           - sub_level: "145"
             os_patch_level: "2025-09"
-          - sub_level: "X"
-            os_patch_level: "lts"
+
+          - sub_level: "157"
+            os_patch_level: "2025-12"
     uses: ./.github/workflows/build.yml
     secrets: inherit
     with:
@@ -132,11 +142,4 @@ jobs:
       use_kpm: ${{ inputs.use_kpm }}
       supp_op: false
       enable_susfs: ${{ !inputs.cancel_susfs }}
-
-  # 仅在直接触发时运行，从 main.yml 调用时跳过
-  get-ksu-manager:
-    if: ${{ !inputs.called_from_main }}
-    uses: ./.github/workflows/get-manager.yml
-    secrets: inherit
-    with:
-      kernelsu_variant: ${{ inputs.kernelsu_variant }}
+      onlyAk3: ${{ inputs.onlyAk3 || false }}

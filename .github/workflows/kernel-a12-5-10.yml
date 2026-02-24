@@ -61,7 +61,7 @@ on:
         description: "编译Ak3"
         required: true
         type: boolean
-        default: false
+        default: true
 
   workflow_call:
     inputs:
@@ -132,10 +132,25 @@ jobs:
             revision: "r14"
           - sub_level: "226"
             os_patch_level: "2024-11"
-            revision: "r8"
+
+          - sub_level: "233"
+            os_patch_level: "2025-02"
+            revision: "r5"
+
+          - sub_level: "236"
+            os_patch_level: "2025-05"
+            revision: "r4"
+
+          - sub_level: "237"
+            os_patch_level: "2025-06"
+            revision: "r4"
+
+          - sub_level: "240"
+            os_patch_level: "2025-09"
+            revision: "r1"
+
           - sub_level: "246"
             os_patch_level: "2025-12"
-            revision: "r1"
     uses: ./.github/workflows/build.yml
     secrets: inherit
     with:
@@ -153,12 +168,12 @@ jobs:
       use_kpm: ${{ inputs.use_kpm }}
       supp_op: false
       enable_susfs: ${{ !inputs.cancel_susfs }}
-      onlyAk3: ${{ inputs.onlyAk3 }}
+      onlyAk3: ${{ inputs.onlyAk3 || false }}
 
   # 仅在直接触发时运行，从 main.yml 调用时跳过
-  get-ksu-manager:
-    if: ${{ !inputs.called_from_main }}
-    uses: ./.github/workflows/get-manager.yml
-    secrets: inherit
-    with:
-      kernelsu_variant: ${{ inputs.kernelsu_variant }}
+#  get-ksu-manager:
+#    if: ${{ !inputs.called_from_main }}
+#    uses: ./.github/workflows/get-manager.yml
+#    secrets: inherit
+#    with:
+#      kernelsu_variant: ${{ inputs.kernelsu_variant }}
