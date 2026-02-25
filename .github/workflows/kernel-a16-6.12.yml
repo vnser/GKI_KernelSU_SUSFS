@@ -123,17 +123,17 @@ jobs:
     uses: ./.github/workflows/build.yml
     secrets: inherit
     with:
-      make_release: ${{ inputs.make_release || false }}
-      android_version: "android16"
-      kernel_version: "6.12"
+      android_version: "android15"
+      kernel_version: "6.6"
       sub_level: ${{ matrix.sub_level }}
       os_patch_level: ${{ matrix.os_patch_level }}
-      kernelsu_variant: ${{ inputs.kernelsu_variant || 'Next' }}
-      kernelsu_branch: ${{ inputs.kernelsu_branch || 'Dev' }}
+      ksu_variant: ${{ inputs.kernelsu_variant }}
+      ksu_branch: ${{ inputs.kernelsu_branch }}
       version: ${{ inputs.version || '' }}
+      build_time: ${{ inputs.build_time || '' }}
       use_zram: ${{ inputs.use_zram }}
       use_bbg: ${{ inputs.use_bbg }}
       use_kpm: ${{ inputs.use_kpm }}
       supp_op: ${{ inputs.supp_op || false }}
+      enable_susfs: ${{ !inputs.cancel_susfs }}
       onlyAk3: ${{ inputs.onlyAk3 || false }}
-      build_time: ${{ inputs.build_time || '' }}
