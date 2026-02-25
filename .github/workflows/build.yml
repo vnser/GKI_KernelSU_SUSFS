@@ -815,7 +815,46 @@ jobs:
           fi
 
           # 移除 defconfig 检查
-          sed -i 's/check_defconfig//' ./common/build.config.gki
+          # sed -i 's/check_defconfig//' ./common/build.config.gki
+          
+          if [[ "${{ inputs.kernel_version }}" == "6.12" ]]; then
+            sed -i '/name = "kernel_aarch64",/a\    check_defconfig = "disabled",' ./common/BUILD.bazel
+            awk '/name = "kernel_aarch64"/,/^\)/ {if(/check_defconfig = "disabled"/) found=1} END{if(found) print "SUCCESS: check_defconfig = \"disabled\" is in the kernel_aarch64 block"; else print "FAILED: NOT in the kernel_aarch64 block"}' ./common/BUILD.bazel
+          else
+             sed -i 's/check_defconfig//' ./common/build.config.gki
+          fi
+          
+          if [ -f ./common/drivers/android/binder/Makefile ]; then
+            perl -i -0777 -pe 's/\$\(\s*CONFIG_ANDROID_BINDER_IPC_RUST\s*\)/m/' ./common/drivers/android/binder/Makefile
+            #perl -i -ne 'print unless /CONFIG_ANDROID_BINDER_IPC_RUST_DUMMY/' ./common/drivers/android/binder/Makefile
+            perl -i -pe 's/^rust_binder-\$\([^)]+\)\s*:=/rust_binder-y :=/' ./common/drivers/android/binder/Makefile
+            cat ./common/drivers/android/Makefile
+            cat ./common/drivers/android/binder/Makefile
+            #perl -ni -e 'print unless /rust_toolchain\s*=\s*"\/\/build\/rust:linux_kernel_toolchain",/' ./common/BUILD.bazel
+            #cat common/BUILD.bazel
+            rustup set profile minimal
+            rustup update nightly
+            rustup default nightly
+            rustup target add aarch64-unknown-none
+          else
+             perl -i -0777 -pe 's/\$\(\s*CONFIG_ANDROID_BINDER_IPC_RUST\s*\)/m/' common/drivers/android/Makefile
+             cat common/drivers/android/Makefile
+          fi
+          #6.12
+          FILE=./common/drivers/staging/android/ashmem.c
+          if [[ -f "$FILE" ]] && ! grep -q 'is_ashmem_file' "$FILE"; then
+          cat >>"$FILE" <<'EOF'
+
+          bool is_ashmem_file(struct file *file) { return false; }
+          int ashmem_area_name(struct file *file, char *name) { return 0; }
+          long ashmem_area_size(struct file *file) { return 0; }
+          struct file *ashmem_area_vmfile(struct file *file) { return NULL; }
+          EXPORT_SYMBOL_GPL(is_ashmem_file);
+          EXPORT_SYMBOL_GPL(ashmem_area_name);
+          EXPORT_SYMBOL_GPL(ashmem_area_size);
+          EXPORT_SYMBOL_GPL(ashmem_area_vmfile);
+          EOF
+          fi
 
       # ==================== 添加 SUSFS 配置 ====================
       # 启用 SUSFS 各项隐藏功能
