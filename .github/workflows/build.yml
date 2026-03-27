@@ -853,7 +853,6 @@ jobs:
 
           if [ "${{ inputs.android_version }}" = "android14" ] || [ "${{ inputs.android_version }}" = "android15" ]; then
             sed -i 's/"drivers\/block\/zram\/zram\.ko",//g; s/"mm\/zsmalloc\.ko",//g' "$KERNEL_ROOT/common/modules.bzl"
-            echo "CONFIG_MODULE_SIG_FORCE=n" >> "$CONFIG_FILE"
           fi
 
           if grep -q "CONFIG_ZSMALLOC=y" "$CONFIG_FILE" && grep -q "CONFIG_ZRAM=y" "$CONFIG_FILE"; then
@@ -1013,9 +1012,6 @@ jobs:
               strings ./bazel-bin/common/kernel_aarch64/Image | grep 'Linux version'
             fi
 
-            echo "一般情况下不会出错，除非KSU仓库和SUSFS仓库代码不同。"
-            echo "不要问，不要急，这跟你怎么努力，或者跟我反馈没关系，因为这跟我无关。"
-            echo "等待适配即可，你有能力则自己去SUKISU仓库提交代码，"
             echo "当前 KSU 最新提交日期: ${KSU_LATEST_COMMIT_DATE}"
             echo "当前 SUSFS 最新提交日期: ${SUSFS_LATEST_COMMIT_DATE}"
             echo "如果日期不同或相差过远则补丁失效、编译失败"
