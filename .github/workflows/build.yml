@@ -458,6 +458,9 @@ jobs:
           echo "BRANCH=$BRANCH" >> $GITHUB_ENV
           echo "KSU 分支: $BRANCH"
 
+      - name: 备份原始 defconfig
+        run: cp "$DEFCONFIG" "$DEFCONFIG.orig"
+
       # ==================== 添加 KernelSU ====================
       # 根据选择的变体添加对应的 KernelSU
       - name: 添加 KernelSU
@@ -818,9 +821,6 @@ jobs:
 
           # 小米：补充符号（幂等）
           ensure_line_once "$XIAOMI_SYMBOL_LIST" "device_find_any_child"
-
-      - name: 备份原始 defconfig
-        run: cp "$DEFCONFIG" "$DEFCONFIG.orig"
 
       - name: 配置 ZRAM 选项
         if: inputs.use_zram
