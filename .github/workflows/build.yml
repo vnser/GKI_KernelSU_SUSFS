@@ -129,7 +129,7 @@ jobs:
 
       # ==================== 检出仓库代码 ====================
       - name: 检出代码仓库
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # ==================== 初始化构建环境 ====================
       # 设置各种路径变量，包括内核源码、补丁、工具等目录
@@ -246,8 +246,10 @@ jobs:
 
           echo "克隆 SUSFS (分支: $SUSFS_BRANCH)..."
           if [ "${{ inputs.ksu_variant }}" == "SukiSU" ]; then
-            # SukiSU 使用 ShirkNeko 的 SUSFS 分支
-            git clone https://github.com/ShirkNeko/susfs4ksu.git -b "$SUSFS_BRANCH"
+            if ! git clone https://github.com/ShirkNeko/susfs4ksu.git -b "$SUSFS_BRANCH" 2>/dev/null; then
+              echo "ShirkNeko 仓库未找到分支 $SUSFS_BRANCH，回退到 simonpunk 原版..."
+              git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "$SUSFS_BRANCH"
+            fi
           elif [ "${{ inputs.ksu_variant }}" == "ReSukiSU" ]; then
             # ReSukiSU 使用 simonpunk 的原版 SUSFS
             git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "$SUSFS_BRANCH"
@@ -343,7 +345,7 @@ jobs:
           if grep -qF "$NEW_RULE" "$TARGET_MAKEFILE"; then
             echo "config_data 规则已是 stock_defconfig，跳过。"
           elif grep -qF "$OLD_RULE" "$TARGET_MAKEFILE"; then
-            sed -i 's|\$(obj)/config_data: \$(KCONFIG_CONFIG) FORCE|$(obj)/config_data: arch/arm64/configs/stock_defconfig FORCE|' "$TARGET_MAKEFILE"
+            sed -i 's|$(obj)/config_data: $(KCONFIG_CONFIG) FORCE|$(obj)/config_data: arch/arm64/configs/stock_defconfig FORCE|' "$TARGET_MAKEFILE"
             echo "已替换 config_data 规则: $TARGET_MAKEFILE"
           else
             echo "::error::未在 $TARGET_MAKEFILE 找到规则: $OLD_RULE"
@@ -531,13 +533,58 @@ jobs:
 
       # ==================== 配置 SukiSU 管理器信息 ====================
       - name: 配置 SukiSU 管理器信息
-        if: inputs.ksu_variant == 'SukiSU' && vars.MANAGER_STR != ''
+        if: inputs.ksu_variant == 'SukiSU'
         working-directory: ${{ env.KERNEL_ROOT }}/KernelSU
         run: |
-          sed -i 's/\(v\$1-\).*\(@\$\)/\1${{ vars.MANAGER_STR }}\2/' ./kernel/Makefile
+          KBUILD_FILE="./kernel/Kbuild"
+          CUSTOM_TAG="${{ vars.MANAGER_STR }}"
 
-      # ==================== 应用 SUSFS 补丁 ====================
-      # SUSFS (Super User SUS FileSystem) 用于隐藏 root 痕迹
+          if [ ! -f "$KBUILD_FILE" ]; then
+            echo "未找到 $KBUILD_FILE，跳过 SukiSU 版本标识定制"
+            exit 0
+          fi
+
+          GIT_HASH=$(git rev-parse --short=8 HEAD)
+          BRANCH_NAME="${BRANCH#-s }"
+          if [ -z "$BRANCH_NAME" ] || [ "$BRANCH_NAME" = "$BRANCH" ]; then
+            BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
+          fi
+
+          if [ -n "$CUSTOM_TAG" ]; then
+            VERSION_TEMPLATE="v\$1-$CUSTOM_TAG@$BRANCH_NAME[$GIT_HASH]"
+          else
+            VERSION_TEMPLATE="v\$1-$GIT_HASH@$BRANCH_NAME"
+          fi
+
+          awk -v body="$VERSION_TEMPLATE" '
+            BEGIN {
+              in_block = 0
+              replaced = 0
+            }
+            /^[[:space:]]*define get_ksu_version_full$/ {
+              print
+              print body
+              in_block = 1
+              replaced = 1
+              next
+            }
+            in_block && /^[[:space:]]*endef$/ {
+              print
+              in_block = 0
+              next
+            }
+            !in_block {
+              print
+            }
+            END {
+              if (!replaced) {
+                exit 1
+              }
+            }
+          ' "$KBUILD_FILE" > "${KBUILD_FILE}.tmp" && mv "${KBUILD_FILE}.tmp" "$KBUILD_FILE"
+
+          echo "已更新 get_ksu_version_full 模板: $VERSION_TEMPLATE"
+
       - name: 应用 SUSFS 补丁
         if: inputs.enable_susfs
         working-directory: ${{ env.KERNEL_ROOT }}
@@ -620,7 +667,7 @@ jobs:
 
             # Android 14 - 6.1 修复
             if [[ "${{ inputs.android_version }}" == "android14" && "${{ inputs.kernel_version }}" == "6.1" ]]; then
-              if [[ "$CURRENT_SUB" -le 138 || "$CURRENT_SUB" -ge 145 ]]; then
+              if [[ "$CURRENT_SUB" -le 141 || "$CURRENT_SUB" -ge 145 ]]; then
                 cp $KERNEL_PATCHES/wild/susfs_fix_patches/v${SUSFS_VERSION}/a14-6.1/base.c.patch ./
                 patch -p1 < base.c.patch || true
               fi
@@ -641,9 +688,35 @@ jobs:
                 cp $KERNEL_PATCHES/wild/susfs_fix_patches/v${SUSFS_VERSION}/a15-6.6/base.c.patch ./
                 patch -p1 < base.c.patch || true
               fi
+              # 修复 6.6.50~6.6.97: 缺少 susfs_def.h 导致编译报 undeclared identifier
+              if grep -q 'AS_FLAGS_SUS_MAP\|susfs_is_current_proc_umounted' ./fs/proc/base.c && ! grep -qF 'susfs_def.h' ./fs/proc/base.c; then
+                if ! grep -qF '#include <linux/dma-buf.h>' ./fs/proc/base.c; then
+                  sed -i '/#include <linux\/cpufreq_times.h>/a #include <linux\/dma-buf.h>' ./fs/proc/base.c
+                fi
+                sed -i '/#include <linux\/dma-buf.h>/a #endif' ./fs/proc/base.c
+                sed -i '/#include <linux\/dma-buf.h>/a #include <linux\/susfs_def.h>' ./fs/proc/base.c
+                sed -i '/#include <linux\/dma-buf.h>/a #ifdef CONFIG_KSU_SUSFS_SUS_MAP' ./fs/proc/base.c
+              fi
+              # 修复 ReSukiSU: 缺少 susfs.h 导致编译报 undeclared identifier
+              if grep -q 'SUSFS_IS_INODE_SUS_MAP\|SUSFS_IS_INODE_OPEN_REDIRECT' ./fs/proc/base.c && ! grep -qF '#include <linux/susfs.h>' ./fs/proc/base.c; then
+                if ! grep -qF '#include <linux/dma-buf.h>' ./fs/proc/base.c; then
+                  sed -i '/#include <linux\/cpufreq_times.h>/a #include <linux\/dma-buf.h>' ./fs/proc/base.c
+                fi
+                sed -i '/#include <linux\/dma-buf.h>/a #include <linux\/susfs.h>' ./fs/proc/base.c
+              fi
               if [[ "$CURRENT_SUB" -le 58 ]]; then
                 cp $KERNEL_PATCHES/wild/susfs_fix_patches/v${SUSFS_VERSION}/a15-6.6/task_mmu.c.patch ./
                 patch -p1 < task_mmu.c.patch || true
+              fi
+            fi
+
+            # Android 16 - 6.12 修复
+            if [[ "${{ inputs.android_version }}" == "android16" && "${{ inputs.kernel_version }}" == "6.12" ]]; then
+              # 修复 setuid_hook.c 重复定义
+              SETUID_HOOK="$KERNEL_ROOT/common/drivers/kernelsu/setuid_hook.c"
+              if [ -f "$SETUID_HOOK" ]; then
+                sed -i 's/defined(CONFIG_KSU_MANUAL_HOOK))/!defined(CONFIG_KSU_SUSFS) \&\& defined(CONFIG_KSU_MANUAL_HOOK))/' "$SETUID_HOOK"
+                echo "已修复 setuid_hook.c 重复定义问题"
               fi
             fi
           fi
@@ -671,8 +744,7 @@ jobs:
 
           cp -r $ZZH_PATCHES/zram/lz4/* ./lib/lz4/
           cp -r $ZZH_PATCHES/zram/include/linux/* ./include/linux/
-          cp $ZZH_PATCHES/zram/${{ inputs.kernel_version }}/lz4_1.10.0.patch ./
-          patch -p1 -F 3 --fuzz=5 < lz4_1.10.0.patch || true
+          bash $ZZH_PATCHES/zram/apply_lz4_neon.sh
 
           if [ -f "fs/f2fs/Makefile" ] && ! grep -qF "f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o" "fs/f2fs/Makefile"; then
             echo "f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o" >> "fs/f2fs/Makefile"
@@ -685,10 +757,14 @@ jobs:
           cp -r $SUKISU_PATCHES/other/zram/lz4k_oplus ./lib/
 
           cp $SUKISU_PATCHES/other/zram/zram_patch/${{ inputs.kernel_version }}/lz4kd.patch ./
-          patch -p1 -F 3 < lz4kd.patch || true
+          if ! patch -p1 -F 3 < lz4kd.patch; then
+            echo "::warning::lz4kd.patch 应用失败，可能已应用或上下文不匹配"
+          fi
 
           cp $SUKISU_PATCHES/other/zram/zram_patch/${{ inputs.kernel_version }}/lz4k_oplus.patch ./
-          patch -p1 -F 3 < lz4k_oplus.patch || true
+          if ! patch -p1 -F 3 < lz4k_oplus.patch; then
+            echo "::warning::lz4k_oplus.patch 应用失败，可能已应用或上下文不匹配"
+          fi
 
       # ==================== 修复 6.6 WiFi/蓝牙兼容性（三星 + 小米） ====================
       # 合并三星与小米修复，并采用幂等写法避免重复追加导致脏变更
@@ -743,15 +819,16 @@ jobs:
           # 小米：补充符号（幂等）
           ensure_line_once "$XIAOMI_SYMBOL_LIST" "device_find_any_child"
 
-      # ==================== 配置 ZRAM 选项 ====================
-      # 启用各种 ZRAM 压缩算法
+      - name: 备份原始 defconfig
+        run: cp "$DEFCONFIG" "$DEFCONFIG.orig"
+
       - name: 配置 ZRAM 选项
         if: inputs.use_zram
         run: |
           CONFIG_FILE="$DEFCONFIG"
 
           if [ "${{ inputs.kernel_version }}" = "5.10" ]; then
-            cat >> "$CONFIG_FILE" << 'EOF'
+            cat >> "$CONFIG_FILE" <<'EOF'
           CONFIG_ZSMALLOC=y
           CONFIG_ZRAM=y
           CONFIG_MODULE_SIG=n
@@ -780,13 +857,7 @@ jobs:
           fi
 
           if grep -q "CONFIG_ZSMALLOC=y" "$CONFIG_FILE" && grep -q "CONFIG_ZRAM=y" "$CONFIG_FILE"; then
-            cat >> "$CONFIG_FILE" << 'EOF'
-          CONFIG_CRYPTO_LZ4HC=y
-          CONFIG_CRYPTO_LZ4K=y
-          CONFIG_CRYPTO_LZ4KD=y
-          CONFIG_CRYPTO_842=y
-          CONFIG_CRYPTO_LZ4K_OPLUS=y
-          EOF
+            cat "$ZZH_PATCHES/config/zram.config" >> "$CONFIG_FILE"
           fi
 
       # ==================== 添加 BBG 防格机补丁 ====================
@@ -814,50 +885,8 @@ jobs:
             echo "CONFIG_KPM=y" >> "$DEFCONFIG"
           fi
 
-          # 移除 defconfig 检查
-          # sed -i 's/check_defconfig//' ./common/build.config.gki
-          
-          if [[ "${{ inputs.kernel_version }}" == "6.12" ]]; then
-            sed -i '/name = "kernel_aarch64",/a\    check_defconfig = "disabled",' ./common/BUILD.bazel
-            awk '/name = "kernel_aarch64"/,/^\)/ {if(/check_defconfig = "disabled"/) found=1} END{if(found) print "SUCCESS: check_defconfig = \"disabled\" is in the kernel_aarch64 block"; else print "FAILED: NOT in the kernel_aarch64 block"}' ./common/BUILD.bazel
-          else
-             sed -i 's/check_defconfig//' ./common/build.config.gki
-          fi
-          
-          if [ -f ./common/drivers/android/binder/Makefile ]; then
-            perl -i -0777 -pe 's/\$\(\s*CONFIG_ANDROID_BINDER_IPC_RUST\s*\)/m/' ./common/drivers/android/binder/Makefile
-            #perl -i -ne 'print unless /CONFIG_ANDROID_BINDER_IPC_RUST_DUMMY/' ./common/drivers/android/binder/Makefile
-            perl -i -pe 's/^rust_binder-\$\([^)]+\)\s*:=/rust_binder-y :=/' ./common/drivers/android/binder/Makefile
-            cat ./common/drivers/android/Makefile
-            cat ./common/drivers/android/binder/Makefile
-            #perl -ni -e 'print unless /rust_toolchain\s*=\s*"\/\/build\/rust:linux_kernel_toolchain",/' ./common/BUILD.bazel
-            #cat common/BUILD.bazel
-            rustup set profile minimal
-            rustup update nightly
-            rustup default nightly
-            rustup target add aarch64-unknown-none
-          else
-             perl -i -0777 -pe 's/\$\(\s*CONFIG_ANDROID_BINDER_IPC_RUST\s*\)/m/' common/drivers/android/Makefile
-             cat common/drivers/android/Makefile
-          fi
-          #6.12
-          FILE=./common/drivers/staging/android/ashmem.c
-          if [[ -f "$FILE" ]] && ! grep -q 'is_ashmem_file' "$FILE"; then
-          cat >>"$FILE" <<'EOF'
+          sed -i 's/check_defconfig//' ./common/build.config.gki
 
-          bool is_ashmem_file(struct file *file) { return false; }
-          int ashmem_area_name(struct file *file, char *name) { return 0; }
-          long ashmem_area_size(struct file *file) { return 0; }
-          struct file *ashmem_area_vmfile(struct file *file) { return NULL; }
-          EXPORT_SYMBOL_GPL(is_ashmem_file);
-          EXPORT_SYMBOL_GPL(ashmem_area_name);
-          EXPORT_SYMBOL_GPL(ashmem_area_size);
-          EXPORT_SYMBOL_GPL(ashmem_area_vmfile);
-          EOF
-          fi
-
-      # ==================== 添加 SUSFS 配置 ====================
-      # 启用 SUSFS 各项隐藏功能
       - name: 添加 SUSFS 配置
         if: inputs.enable_susfs
         run: |
@@ -871,7 +900,7 @@ jobs:
           CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y
           CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
           CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
-          CONFIG_KSU_SUSFS_SUS_MAP=n
+          CONFIG_KSU_SUSFS_SUS_MAP=y
           EOF
 
       # ==================== 配置内核名称 ====================
@@ -883,23 +912,36 @@ jobs:
           else
             # 配置 6.1+ 内核
             sed -i '/^[[:space:]]*"protected_exports_list"[[:space:]]*:[[:space:]]*"android\/abi_gki_protected_exports_aarch64",$/d' ./common/BUILD.bazel
+            sed -i '/kmi_symbol_list_strict_mode/d' ./common/BUILD.bazel
             rm -rf ./common/android/abi_gki_protected_exports_*
             sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
           fi
 
-          # 配置内核名称
-          if [ -n "${{ inputs.version }}" ]; then
-            CLEAN_VERSION=$(echo "${{ inputs.version }}" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+//')
-            sed -i '$s|echo "\$res"|echo "'"$CLEAN_VERSION"'"|' ./common/scripts/setlocalversion
+          VERSION_INPUT=$(echo "${{ inputs.version }}" | tr -d '[:space:]')
+          if [ -n "$VERSION_INPUT" ]; then
+            CLEAN_VERSION=$(echo "$VERSION_INPUT" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+//')
+            perl -i -0777 -pe 's/(.*)echo "\$\{KERNELVERSION\}\$\{file_localversion\}\$\{config_localversion\}\$\{LOCALVERSION\}\$\{scm_version\}"/$1echo "\$\{KERNELVERSION\}'"${CLEAN_VERSION}"'"/s' ./common/scripts/setlocalversion 2>/dev/null || true
+            sed -i "\$s|echo \"\$res\"|echo \"${CLEAN_VERSION}\"|" ./common/scripts/setlocalversion 2>/dev/null || true
             sed -i '/^CONFIG_LOCALVERSION=/ s/="\([^"]*\)"/="'"$CLEAN_VERSION"'"/' ./common/arch/arm64/configs/gki_defconfig
           elif [ ! -f "build/build.sh" ]; then
             cd ./common
             BID="ab$((RANDOM % 90000000 + 10000000))"
             GHASH=$(git rev-parse --verify HEAD | cut -c1-13)
-            kmi_61="-android14-11-g${GHASH}-${BID}"
-            sed -i "\$s|echo \"\$res\"|echo \"$kmi_61\"|" ./scripts/setlocalversion 2>/dev/null || true
-            kmi_66="-g${GHASH}-${BID}-4k"
-            sed -i "/^CONFIG_LOCALVERSION=/ s/=\"[^\"]*\"/=\"${kmi_66}\"/" ./arch/arm64/configs/gki_defconfig 2>/dev/null || true
+            case "${{ inputs.android_version }}-${{ inputs.kernel_version }}" in
+              "android14-6.1")  KMI_TAG="android14-11" ;;
+              "android15-6.6")  KMI_TAG="android15-8" ;;
+              "android16-6.12") KMI_TAG="android16-5" ;;
+              *) KMI_TAG="${{ inputs.android_version }}" ;;
+            esac
+
+            if [ "${{ inputs.kernel_version }}" = "6.1" ]; then
+              KMI_LOCAL="-${KMI_TAG}-g${GHASH}-${BID}-4k"
+              sed -i "\$s|echo \"\$res\"|echo \"${KMI_LOCAL}\"|" ./scripts/setlocalversion 2>/dev/null || true
+              sed -i "/^CONFIG_LOCALVERSION=/ s/=\"[^\"]*\"/=\"${KMI_LOCAL}\"/" ./arch/arm64/configs/gki_defconfig 2>/dev/null || true
+            else
+              SUFFIX="-${KMI_TAG}-g${GHASH}-${BID}"
+              perl -i -0777 -pe 's/(.*)echo "\$\{KERNELVERSION\}\$\{file_localversion\}\$\{config_localversion\}\$\{LOCALVERSION\}\$\{scm_version\}"/$1echo "\$\{KERNELVERSION\}'"${SUFFIX}"'\$\{config_localversion\}"/s' ./scripts/setlocalversion 2>/dev/null || true
+            fi
           fi
 
       # ==================== 自定义构建时间 ====================
@@ -925,7 +967,7 @@ jobs:
           if [ -f "$f" ]; then
             echo "写入 mkcompile_h 构建时间: $DATESTR"
             if grep -q 'UTS_VERSION=' "$f"; then
-              perl -pi -e "s{UTS_VERSION=\"\\\$\\(.*?\\)\"}{UTS_VERSION=\"#1 SMP PREEMPT $DATESTR\"}" "$f"
+              perl -pi -e "s{UTS_VERSION=\"\\\$\\\(.*?\\\)\"}{UTS_VERSION=\"#1 SMP PREEMPT $DATESTR\"}" "$f"
             else
               perl -0777 -pi -e "s{cat <<EOF}{cat <<EOF\n#undef UTS_VERSION\n#define UTS_VERSION \"#1 SMP PREEMPT $DATESTR\" } unless /UTS_VERSION/" "$f"
             fi
@@ -933,21 +975,13 @@ jobs:
             echo "未找到目标文件，跳过: $f"
           fi
 
-      # ==================== 编译内核 ====================
-      # 使用重试机制编译内核，超时后自动重试
-      - name: 构建——如出错为该KSU暂时未同步SUSFS代码或编译时错误(等待该KSU仓库修复)
+      - name: 编译内核
         uses: nick-fields/retry@v3
         with:
           timeout_minutes: 30
           max_attempts: 3
           retry_on: timeout
           command: |
-            echo "::group::构建说明"
-            echo "一般情况下不会出错，除非KSU仓库和SUSFS仓库代码不同。"
-            echo "不要问，不要急，这跟你怎么努力，或者跟我反馈没关系，因为这跟我无关。"
-            echo "等待适配即可，你有能力则自己去SUKISU仓库提交代码，"
-            echo "::endgroup::"
-            
             echo "当前 KSU 最新提交日期: ${KSU_LATEST_COMMIT_DATE}"
             echo "当前 SUSFS 最新提交日期: ${SUSFS_LATEST_COMMIT_DATE}"
             set -ex
@@ -958,11 +992,24 @@ jobs:
             sed -i '/KMI_SYMBOL_LIST_STRICT_MODE/d' ./common/build.config.gki.aarch64
 
             if [ -f "build/build.sh" ]; then
-              # 5.x 内核使用传统构建脚本
               LTO=thin BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh CC="/usr/bin/ccache clang" || exit 1
             else
-              # 6.1+ 内核使用 Bazel 构建
-              tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast --lto=thin //common:kernel_aarch64_dist || exit 1
+              # 提取 gki_defconfig 修改到 fragment，避免 bazel trim 检查失败
+              FRAG="common/arch/arm64/configs/ksu.fragment"
+              diff "$DEFCONFIG.orig" "$DEFCONFIG" | grep '^>' | sed 's/^> //; s/^[[:space:]]*//' > "$FRAG" || true
+              cp "$DEFCONFIG.orig" "$DEFCONFIG"
+              echo "=== KSU Fragment 内容 ==="
+              cat "$FRAG"
+              echo "========================="
+              FRAG_FLAG=""
+              if [ -s "$FRAG" ]; then
+                FRAG_FLAG="--defconfig_fragment=//common:arch/arm64/configs/ksu.fragment"
+              fi
+              LTO_FLAG="--lto=thin"
+              if [ "${{ inputs.kernel_version }}" = "6.12" ]; then
+                LTO_FLAG="--lto=none"
+              fi
+              tools/bazel build --disk_cache=/home/runner/.cache/bazel --config=fast $LTO_FLAG $FRAG_FLAG //common:kernel_aarch64_dist || exit 1
               strings ./bazel-bin/common/kernel_aarch64/Image | grep 'Linux version'
             fi
 
